@@ -1,0 +1,33 @@
+const {GuildMember} = require('discord.js');
+
+module.exports = {
+  name: 'skip',
+  description: 'Pula uma música!',
+  async execute(interaction, player) {
+    if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
+      return void interaction.reply({
+        content: 'Você não está em um canal de voz!',
+        ephemeral: true,
+      });
+    }
+
+    if (
+      interaction.guild.members.me.voice.channelId &&
+      interaction.member.voice.channelId !== interaction.guild.members.me.voice.channelId
+    ) {
+      return void interaction.reply({
+        content: 'Você não está no mesmo canal de voz que eu!',
+        ephemeral: true,
+      });
+    }
+
+    await interaction.deferReply();
+    const queue = player.getQueue(interaction.guildId);
+    if (!queue || !queue.playing) return void interaction.followUp({content: '❌ | Nenhuma música está tocando!'});
+    const currentTrack = queue.current;
+    const success = queue.skip();
+    return void interaction.followUp({
+      content: success ? `✅ | Pulada **${currentTrack}**!` : '❌ | Algo deu errado!',
+    });
+  },
+};
